@@ -1,0 +1,49 @@
+version: '3'
+networks:
+  myNetwork:
+services:
+  zookeeper:
+    container_name: zookeeper-gift
+    image: 'bitnami/zookeeper:latest'
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: yes
+      ZOOKEEPER_SERVER_ID: 2
+      ZOOKEEPER_CLIENT_PORT: 12181
+      ZOOKEEPER_PEER_PORT: 12888
+      ZOOKEEPER_LEADER_PORT: 13888
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+    ports:
+      - "2181:2181"
+    networks:
+      - myNetwork
+
+  kafka:
+    container_name: kafka-gift
+    image: bitnami/kafka:2.2.1-ol-7-r34
+    ports:
+      - 9001:9001
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://:29092,OUTSIDE://localhost:9001
+      KAFKA_LISTENERS: INSIDE://:29092,OUTSIDE://:9001
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+    depends_on:
+      - zookeeper
+    networks:
+      - myNetwork
+  mysql:
+    image: "mysql:8.0"
+    environment:
+      MYSQL_ROOT_PASSWORD: 1
+      MYSQL_USER: khoadt
+      MYSQL_PASSWORD: 1
+    ports:
+      - 3306:3306
+    volumes:
+      - database:/var/bin/mysql
+volumes:
+  database:
