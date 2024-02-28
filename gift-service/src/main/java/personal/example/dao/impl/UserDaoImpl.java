@@ -42,9 +42,7 @@ public class UserDaoImpl implements UserDao {
         ResultSet resultSet = null;
 
         StringBuilder sb = new StringBuilder();
-        sb.append("\n" +
-                "\n" +
-                "select u.id, ur.point, u.date_created,\n" +
+        sb.append("select u.id, ur.point, u.date_created,\n" +
                 "       CASE\n" +
                 "        WHEN ur.point >= 1000000000 THEN 'TOP1'\n" +
                 "        WHEN ur.point >= 500000000 && ur.point < 1000000000 THEN 'TOP2'\n" +
@@ -57,30 +55,39 @@ public class UserDaoImpl implements UserDao {
                 "        WHEN ur.point >= 100000000 && ur.point < 500000000 THEN u.gem\n" +
                 "        ELSE u.gold\n" +
                 "    END AS gift,\n" +
-                "    CASE\n" +
-                "        WHEN ur.point >= 1000000000 THEN @rn := @rn + 1\n" +
-                "        WHEN ur.point >= 500000000 && ur.point < 1000000000 THEN @rn1 := @rn1 + 1\n" +
-                "        WHEN ur.point >= 100000000 && ur.point < 500000000 THEN (@rn2 := @rn2 + 1)\n" +
-                "        ELSE @rn3 := @rn3 + 1\n" +
-                "    END AS ranked\n" +
+                "    um.receive,\n" +
+                "    um.mail_idx\n" +
                 "from user u\n" +
-                "INNER JOIN (SELECT @rn := 0, @rn1 := 9, @rn2 := 29, @rn3 := 99) AS VAR_INIT\n" +
                 "right join user_rank ur on u.id = ur.user_id\n" +
+                "left join user_mail um on u.id = um.user_id\n" +
                 "where u.id is not null\n" +
-                "order by ur.point desc\n");
-
+                "order by ur.point desc");
+        int ranktop1 = 0, ranktop2 = 10, ranktop3 = 30, ranktop4 = 100;
         try {
             connection = this.dataSource.getConnection();
             preparedStatement = connection.prepareStatement(sb.toString());
             resultSet = preparedStatement.executeQuery();
+
             while (resultSet.next()) {
                 UserDTO item = UserDTO.builder()
                             .user_id(resultSet.getInt("id"))
                             .point(resultSet.getInt("point"))
                             .gift(resultSet.getInt("gift"))
-                            .rank(resultSet.getInt("ranked"))
+                            .mail_idx(resultSet.getInt("mail_idx"))
+                            .receive(resultSet.getString("receive"))
                             .date_created(resultSet.getDate("date_created")).build();
                 String key = resultSet.getString("top");
+
+                switch (key) {
+                    case "TOP1":
+                        item.setRank(++ranktop1);
+                    case "TOP2":
+                        item.setRank(++ranktop2);
+                    case "TOP3":
+                        item.setRank(++ranktop3);
+                    default:
+                        item.setRank(++ranktop4);
+                }
 
                 List<UserDTO> value = map.getOrDefault(key, new ArrayList<>());
                 value.add(item);

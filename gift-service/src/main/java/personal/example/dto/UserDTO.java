@@ -13,4 +13,6 @@ public class UserDTO {
     private int gift;
     private int rank;
     private Date date_created;
+    private String receive;
+    private int mail_idx;
 }

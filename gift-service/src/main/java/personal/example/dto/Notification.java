@@ -16,13 +16,14 @@ public class Notification {
     private String title;
     private String message;
     private int bonus;
-    private Date mailidx;
+    private int mailidx;
     private String receiver;
 
     public Notification(UserDTO user) {
         this.bonus = user.getGift();
         this.title = "Phần thưởng xếp hạng người chơi ";
         this.message = "Chúc mừng bạn đã đạt thứ hạng " + user.getRank();
-        this.mailidx = user.getDate_created();
+        this.mailidx = user.getMail_idx();
+        this.receiver = user.getReceive();
     }
 }
